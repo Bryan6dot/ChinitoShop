@@ -158,6 +158,7 @@
     display:none;
   }
   .gallery img.active{display:block;}
+  .gallery{cursor:zoom-in;}
   .gallery-nav{
     position:absolute;
     top:0;bottom:0;
@@ -166,6 +167,7 @@
     border:none;
     cursor:pointer;
     opacity:0;
+    z-index:2;
   }
   .gallery-nav.prev{left:0;}
   .gallery-nav.next{right:0;}
@@ -207,6 +209,105 @@
     margin-top:8px;
   }
 
+  /* ---------- LIGHTBOX ---------- */
+  #lightbox{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(8,9,7,0.94);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+  }
+  #lightbox.open{display:flex;}
+  .lb-inner{
+    width:100%;
+    max-width:760px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .lb-stage{
+    position:relative;
+    width:100%;
+    max-height:74vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+  }
+  .lb-stage img{
+    max-width:100%;
+    max-height:74vh;
+    object-fit:contain;
+    display:block;
+  }
+  .lb-nav{
+    position:absolute;
+    top:0;bottom:0;
+    width:64px;
+    background:transparent;
+    border:none;
+    color:var(--text);
+    font-size:1.8rem;
+    cursor:pointer;
+    opacity:0.55;
+    transition:opacity 0.15s ease;
+  }
+  .lb-nav:hover{opacity:1;}
+  .lb-nav.prev{left:0;}
+  .lb-nav.next{right:0;}
+  #lb-close{
+    position:absolute;
+    top:18px;
+    right:24px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:1.6rem;
+    line-height:1;
+    cursor:pointer;
+    opacity:0.7;
+    z-index:5;
+  }
+  #lb-close:hover{opacity:1;}
+  .lb-info{
+    width:100%;
+    max-width:760px;
+    padding:16px 4px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:16px;
+  }
+  .lb-info .name{
+    font-size:1.15rem;
+    font-weight:600;
+    margin:0;
+  }
+  .lb-info .price{
+    color:var(--accent);
+    font-size:1rem;
+    font-weight:500;
+    margin:0;
+    white-space:nowrap;
+  }
+  .lb-dots{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:14px;
+  }
+  .lb-dots .dot{width:6px;height:6px;}
+
+  @media (max-width:600px){
+    #lightbox{padding:16px;}
+    .lb-nav{width:44px;font-size:1.4rem;}
+    #lb-close{top:8px;right:10px;}
+  }
+
   @media (max-width:480px){
     .header-inner{padding:16px 16px 0;}
     main{padding:24px 16px 60px;}
@@ -246,6 +347,23 @@
         <div class="grid" id="grid-arcteryx"></div>
       </section>
     </main>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox">
+    <button id="lb-close" aria-label="Cerrar">&times;</button>
+    <div class="lb-inner">
+      <div class="lb-stage">
+        <button class="lb-nav prev" id="lb-prev" aria-label="Imagen anterior">&#8249;</button>
+        <img id="lb-img" src="" alt="">
+        <button class="lb-nav next" id="lb-next" aria-label="Siguiente imagen">&#8250;</button>
+      </div>
+      <div class="lb-info">
+        <p class="name" id="lb-name"></p>
+        <p class="price" id="lb-price"></p>
+      </div>
+      <div class="lb-dots" id="lb-dots"></div>
+    </div>
   </div>
 
 <script>
@@ -395,8 +513,8 @@
           dotEls[idx].classList.add("active");
         }
 
-        prev.addEventListener("click", () => show(idx - 1));
-        next.addEventListener("click", () => show(idx + 1));
+        prev.addEventListener("click", (e) => { e.stopPropagation(); show(idx - 1); });
+        next.addEventListener("click", (e) => { e.stopPropagation(); show(idx + 1); });
 
         gallery.appendChild(prev);
         gallery.appendChild(next);
@@ -414,11 +532,85 @@
       info.appendChild(name);
       info.appendChild(price);
 
+      gallery.addEventListener("click", (e) => {
+        // usa el índice actualmente mostrado en la tarjeta como punto de partida
+        const activeImg = gallery.querySelector("img.active");
+        const startIdx = Array.from(gallery.querySelectorAll("img")).indexOf(activeImg);
+        openLightbox(product, startIdx);
+      });
+
       card.appendChild(gallery);
       card.appendChild(info);
       grid.appendChild(card);
     });
   }
+
+  // ---------- LIGHTBOX LOGIC ----------
+  const lightbox = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lb-img");
+  const lbName = document.getElementById("lb-name");
+  const lbPrice = document.getElementById("lb-price");
+  const lbDots = document.getElementById("lb-dots");
+  const lbPrev = document.getElementById("lb-prev");
+  const lbNext = document.getElementById("lb-next");
+  const lbClose = document.getElementById("lb-close");
+
+  let lbProduct = null;
+  let lbIndex = 0;
+
+  function openLightbox(product, startIdx){
+    lbProduct = product;
+    lbIndex = startIdx || 0;
+    lbName.textContent = product.name;
+    lbPrice.textContent = product.price;
+
+    lbDots.innerHTML = "";
+    if(product.images.length > 1){
+      product.images.forEach((_, i) => {
+        const d = document.createElement("span");
+        d.className = "dot" + (i === lbIndex ? " active" : "");
+        lbDots.appendChild(d);
+      });
+    }
+    lbPrev.style.display = product.images.length > 1 ? "block" : "none";
+    lbNext.style.display = product.images.length > 1 ? "block" : "none";
+
+    renderLbImage();
+    lightbox.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function renderLbImage(){
+    lbImg.src = IMG_DIR + lbProduct.images[lbIndex];
+    lbImg.alt = lbProduct.name;
+    lbDots.querySelectorAll(".dot").forEach((d, i) => {
+      d.classList.toggle("active", i === lbIndex);
+    });
+  }
+
+  function lbShow(newIdx){
+    const total = lbProduct.images.length;
+    lbIndex = (newIdx + total) % total;
+    renderLbImage();
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  lbPrev.addEventListener("click", () => lbShow(lbIndex - 1));
+  lbNext.addEventListener("click", () => lbShow(lbIndex + 1));
+  lbClose.addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", (e) => {
+    if(e.target === lightbox) closeLightbox();
+  });
+  document.addEventListener("keydown", (e) => {
+    if(!lightbox.classList.contains("open")) return;
+    if(e.key === "Escape") closeLightbox();
+    if(e.key === "ArrowLeft") lbShow(lbIndex - 1);
+    if(e.key === "ArrowRight") lbShow(lbIndex + 1);
+  });
 
   // ---------- TABS ----------
   document.querySelectorAll(".tab-btn").forEach(btn => {
