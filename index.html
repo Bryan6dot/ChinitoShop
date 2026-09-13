@@ -442,7 +442,7 @@
     ]
   };
 
-  const SECRET = "chinito shop";
+  const SECRET_WORDS = ["chinito shop - luis", "chinito shop - bryan", "chinito shop - martin", "los chinos"];
 
   // ---------- LOGIN ----------
   const loginScreen = document.getElementById("login-screen");
@@ -452,7 +452,7 @@
 
   function tryUnlock(){
     const val = input.value.trim().toLowerCase();
-    if(val === SECRET){
+    if(SECRET_WORDS.includes(val)){
       loginScreen.style.display = "none";
       catalog.style.display = "block";
       buildCatalog();
