@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chinito Shop — Catálogo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #111310;
+    --panel: #1a1d19;
+    --panel-2: #202420;
+    --line: #33362f;
+    --text: #EDEAE1;
+    --muted: #93958a;
+    --accent: #FF5B1F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.tab-label,.brand{
+    font-family:'Barlow Condensed',sans-serif;
+    letter-spacing:0.01em;
+  }
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-box{
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+  .login-box .brand{
+    font-size:2.1rem;
+    font-weight:700;
+    margin:0 0 4px;
+    color:var(--text);
+  }
+  .login-box .brand span{color:var(--accent);}
+  .login-box .tagline{
+    color:var(--muted);
+    font-size:0.85rem;
+    margin:0 0 40px;
+    font-weight:400;
+  }
+  #keyword-input{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--line);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:1.05rem;
+    padding:10px 4px;
+    text-align:center;
+    outline:none;
+    transition:border-color 0.2s ease;
+  }
+  #keyword-input:focus{border-bottom-color:var(--accent);}
+  #keyword-input::placeholder{color:var(--muted);}
+  .login-error{
+    margin-top:16px;
+    font-size:0.8rem;
+    color:var(--accent);
+    min-height:16px;
+    opacity:0;
+    transition:opacity 0.2s ease;
+  }
+  .login-error.show{opacity:1;}
+  .shake{animation:shake 0.35s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+
+  /* ---------- CATALOG ---------- */
+  #catalog{display:none;}
+  header.site-header{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:rgba(17,19,16,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{
+    max-width:1100px;
+    margin:0 auto;
+    padding:18px 24px 0;
+  }
+  .header-inner .brand{
+    font-size:1.4rem;
+    font-weight:700;
+    margin:0 0 14px;
+  }
+  .header-inner .brand span{color:var(--accent);}
+  .tabs{
+    display:flex;
+    gap:0;
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:1.05rem;
+    font-weight:600;
+    letter-spacing:0.02em;
+    padding:10px 20px 12px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:28px 22px;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+  }
+  .gallery{
+    position:relative;
+    aspect-ratio:4/5;
+    background:var(--panel-2);
+    overflow:hidden;
+  }
+  .gallery img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:none;
+  }
+  .gallery img.active{display:block;}
+  .gallery-nav{
+    position:absolute;
+    top:0;bottom:0;
+    width:32%;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    opacity:0;
+  }
+  .gallery-nav.prev{left:0;}
+  .gallery-nav.next{right:0;}
+  .dots{
+    position:absolute;
+    bottom:8px;
+    left:0;right:0;
+    display:flex;
+    justify-content:center;
+    gap:5px;
+  }
+  .dot{
+    width:5px;height:5px;
+    border-radius:50%;
+    background:rgba(237,234,225,0.35);
+    transition:background 0.15s ease;
+  }
+  .dot.active{background:var(--accent);}
+  .card-info{
+    padding:14px 14px 16px;
+  }
+  .card-info .name{
+    font-size:1rem;
+    font-weight:600;
+    margin:0 0 4px;
+    line-height:1.25;
+  }
+  .card-info .price{
+    color:var(--accent);
+    font-size:0.92rem;
+    font-weight:500;
+    margin:0;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .empty-note{
+    color:var(--muted);
+    font-size:0.85rem;
+    margin-top:8px;
+  }
+
+  @media (max-width:480px){
+    .header-inner{padding:16px 16px 0;}
+    main{padding:24px 16px 60px;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 12px;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <p class="brand">Chinito <span>Shop</span></p>
+      <p class="tagline">Catálogo privado — ingresa la palabra clave</p>
+      <input id="keyword-input" type="text" placeholder="palabra clave" autocomplete="off" autofocus>
+      <p class="login-error" id="login-error">Palabra clave incorrecta</p>
+    </div>
+  </div>
+
+  <!-- CATALOG -->
+  <div id="catalog">
+    <header class="site-header">
+      <div class="header-inner">
+        <p class="brand">Chinito <span>Shop</span></p>
+        <div class="tabs">
+          <button class="tab-btn active" data-view="northface">North Face</button>
+          <button class="tab-btn" data-view="arcteryx">Arc'teryx</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="view active" id="view-northface">
+        <div class="grid" id="grid-northface"></div>
+      </section>
+      <section class="view" id="view-arcteryx">
+        <div class="grid" id="grid-arcteryx"></div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  // ---------- DATA ----------
+  const IMG_DIR = "images/"; // coloca tu carpeta de imágenes junto a este archivo, renombrada "images"
+
+  const PRODUCTS = {
+    arcteryx: [
+      {
+        name: "Arc'teryx Wind/Rain Jacket",
+        price: "$58.28 - $108.18",
+        images: [
+          "Arcterix58_108(1).jpg",
+          "Arcterix58_108(2)58.15.png",
+          "Arcterix58_108(3)78.69.png",
+          "Arcterix58_108(4)94.49.png"
+        ]
+      },
+      {
+        name: "Arc'teryx Rain Pants",
+        price: "$38.50 - $60.50",
+        images: [
+          "Arcterixpans38_60(1).jpg",
+          "Arcterixpans38_60(2)47.09.jpg",
+          "Arcterixpans38_60(3)37.61.jpg"
+        ]
+      },
+      {
+        name: "Arc'teryx Wind Jacket",
+        price: "$73.95",
+        images: [
+          "Arcterixwindcutter73.95(1).jpg",
+          "Arcterixwindcutter73.95(2).jpg",
+          "Arcterixwindcutter73.95(3).jpg",
+          "Arcterixwindcutter73.95(4).jpg",
+          "Arcterixwindcutter73.95(5).jpg"
+        ]
+      }
+    ],
+    northface: [
+      {
+        name: "North Face Puffer Jacket",
+        price: "$30.02",
+        images: [
+          "northFacePuffy30.02(1).jpg",
+          "northFacePuffy30.02(2).jpg"
+        ]
+      },
+      {
+        name: "North Face Windbreaker",
+        price: "$29.50",
+        images: [
+          "northFacewindcutter29.23.jpg",
+          "northFacewindcutter29.23(2).png",
+          "northFacewindcutter29.23(3).png",
+          "northFacewindcutter29.23(4).png"
+        ]
+      },
+      {
+        name: "North Face Windbreaker",
+        price: "$34.45",
+        images: [
+          "NorthFacewindcutter34.45(1).jpg",
+          "NorthFacewindcutter34.45(2).jpg",
+          "NorthFacewindcutter34.45(3).jpg",
+          "NorthFacewindcutter34.45(4).jpg"
+        ]
+      }
+    ]
+  };
+
+  const SECRET = "chinito shop";
+
+  // ---------- LOGIN ----------
+  const loginScreen = document.getElementById("login-screen");
+  const catalog = document.getElementById("catalog");
+  const input = document.getElementById("keyword-input");
+  const errorMsg = document.getElementById("login-error");
+
+  function tryUnlock(){
+    const val = input.value.trim().toLowerCase();
+    if(val === SECRET){
+      loginScreen.style.display = "none";
+      catalog.style.display = "block";
+      buildCatalog();
+    } else {
+      errorMsg.classList.add("show");
+      input.parentElement.classList.add("shake");
+      setTimeout(() => input.parentElement.classList.remove("shake"), 350);
+      input.value = "";
+    }
+  }
+  input.addEventListener("keydown", e => {
+    if(e.key === "Enter") tryUnlock();
+  });
+
+  // ---------- CATALOG BUILD ----------
+  function buildCatalog(){
+    renderGrid("grid-northface", PRODUCTS.northface);
+    renderGrid("grid-arcteryx", PRODUCTS.arcteryx);
+  }
+
+  function renderGrid(gridId, items){
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = "";
+    items.forEach(product => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const gallery = document.createElement("div");
+      gallery.className = "gallery";
+
+      product.images.forEach((file, i) => {
+        const img = document.createElement("img");
+        img.src = IMG_DIR + file;
+        img.alt = product.name;
+        img.loading = "lazy";
+        if(i === 0) img.classList.add("active");
+        gallery.appendChild(img);
+      });
+
+      if(product.images.length > 1){
+        const prev = document.createElement("button");
+        prev.className = "gallery-nav prev";
+        prev.setAttribute("aria-label", "Imagen anterior");
+        const next = document.createElement("button");
+        next.className = "gallery-nav next";
+        next.setAttribute("aria-label", "Siguiente imagen");
+
+        let idx = 0;
+        const imgs = gallery.querySelectorAll("img");
+
+        const dots = document.createElement("div");
+        dots.className = "dots";
+        product.images.forEach((_, i) => {
+          const d = document.createElement("span");
+          d.className = "dot" + (i === 0 ? " active" : "");
+          dots.appendChild(d);
+        });
+        const dotEls = dots.querySelectorAll(".dot");
+
+        function show(newIdx){
+          imgs[idx].classList.remove("active");
+          dotEls[idx].classList.remove("active");
+          idx = (newIdx + imgs.length) % imgs.length;
+          imgs[idx].classList.add("active");
+          dotEls[idx].classList.add("active");
+        }
+
+        prev.addEventListener("click", () => show(idx - 1));
+        next.addEventListener("click", () => show(idx + 1));
+
+        gallery.appendChild(prev);
+        gallery.appendChild(next);
+        gallery.appendChild(dots);
+      }
+
+      const info = document.createElement("div");
+      info.className = "card-info";
+      const name = document.createElement("p");
+      name.className = "name";
+      name.textContent = product.name;
+      const price = document.createElement("p");
+      price.className = "price";
+      price.textContent = product.price;
+      info.appendChild(name);
+      info.appendChild(price);
+
+      card.appendChild(gallery);
+      card.appendChild(info);
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------- TABS ----------
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("view-" + btn.dataset.view).classList.add("active");
+    });
+  });
+</script>
+</body>
+</html>
