@@ -202,6 +202,13 @@
     margin:0;
     font-variant-numeric:tabular-nums;
   }
+  .missing-list{
+    margin:8px 0 0;
+    font-size:0.72rem;
+    color:#ff8f6a;
+    line-height:1.5;
+    word-break:break-all;
+  }
 
   .empty-note{
     color:var(--muted);
@@ -531,6 +538,18 @@
       price.textContent = product.price;
       info.appendChild(name);
       info.appendChild(price);
+
+      const missingList = document.createElement("div");
+      missingList.className = "missing-list";
+      info.appendChild(missingList);
+
+      gallery.querySelectorAll("img").forEach((img, i) => {
+        img.addEventListener("error", () => {
+          const line = document.createElement("div");
+          line.textContent = "No encontrada: " + IMG_DIR + product.images[i];
+          missingList.appendChild(line);
+        });
+      });
 
       gallery.addEventListener("click", (e) => {
         // usa el índice actualmente mostrado en la tarjeta como punto de partida
